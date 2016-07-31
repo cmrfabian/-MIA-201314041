@@ -3,16 +3,34 @@
 
 #include <string.h>
 
+
+/* Nodo para lista de Tokens.*/
 typedef struct Token
 {
-   char* tipo;
    char valor[150];
+   char* tipo;
 
    struct Token *siguiente;
    struct Token *anterior;
 
 }token;
 
+/* Nodo para lista de Particiones Montadas. */
+typedef struct Disco {
+
+   char id[50];
+   char path[150];
+   char name[50];
+   int letra;
+   int numeromount;
+   int estado;
+
+   struct Disco *siguiente;
+   struct Disco *anterior;
+
+}disco;
+
+/* Lista de tokens */
 typedef struct ListaTokens
 {
     token *primero;
@@ -20,24 +38,29 @@ typedef struct ListaTokens
 
 }listatokens;
 
+
+/* Lista Particiones Montadas */
+typedef struct ListaMontados{
+    disco *primero;
+    disco *ultimo;
+}listamontados;
+
+
 token* crearToken(char *tipo, char valor[])
 {
-    token* nVA;
-    nVA = (token*)malloc(sizeof(token));
-    nVA->tipo = tipo;
+    token* nVA = (token*)malloc(sizeof(token));
     strcpy(nVA->valor,valor);
-    //nVA->valor = valor;
+    nVA->tipo = tipo;
+
     nVA->siguiente = NULL;
     nVA->anterior = NULL;
-
     return nVA;
 }
 
-
-void insertarToken(listatokens *lv,  char *tipo, char valor[])
+/* Insertar en lista como en EDD */
+void insertarToken( listatokens *lv, char *tipo, char valor[])
 {
-    token* nv;
-    nv = crearToken(tipo, valor);
+    token* nv = crearToken(tipo, valor);
     if (lv->primero == NULL)
     {
         lv->primero = nv;
@@ -51,5 +74,81 @@ void insertarToken(listatokens *lv,  char *tipo, char valor[])
     }
     lv->ultimo = nv;
 }
+
+
+disco* creardisco(char name[], char id[], char path[], int letra, int numeromount)
+{
+    disco* nVA;
+    nVA = (disco*)malloc(sizeof(disco));
+    strcpy(nVA->name,name);
+    strcpy(nVA->id,id);
+    strcpy(nVA->path,path);
+    nVA->letra = letra;
+    nVA->numeromount = numeromount;
+
+    nVA->siguiente = NULL;
+    nVA->anterior = NULL;
+    return nVA;
+}
+
+
+void montarDisco(listamontados *lm,  char name[], char id[], char path[],  int letra, int numeromount)
+{
+    disco* nv;
+    nv = creardisco(name,id,path,letra,numeromount);
+    if (lm->primero == NULL)
+    {
+        lm->primero = nv;
+        lm->ultimo = nv;
+    }
+    else
+    {
+        lm->ultimo->siguiente = nv;
+        nv->anterior = lm->ultimo;
+        nv->siguiente = NULL;
+    }
+    lm->ultimo = nv;
+}
+
+
+void desmontardisco(listamontados *lista, char id[])
+{
+    disco* aux;
+    aux = lista->primero;
+    while (aux != NULL)
+    {
+        if(strcasecmp(aux->id,id)==0)
+        {
+
+            if(aux == lista->primero && aux != lista->ultimo)
+            {
+                lista->primero = aux->siguiente;
+                lista->primero->anterior = NULL;
+                free(aux);
+            }
+            else if(aux== lista->ultimo &&  aux != lista->primero)
+            {
+                lista->ultimo = aux->anterior;
+                lista->ultimo->siguiente = NULL;
+                free(aux);
+            }
+            else if (aux == lista->primero && aux == lista->ultimo)
+            {
+                lista->primero = NULL;
+                lista->ultimo = NULL;
+                free(aux);
+            }
+            else
+            {
+                aux->anterior->siguiente = aux->siguiente;
+                aux->siguiente->anterior = aux->anterior;
+                free(aux);
+            }
+        break;
+        }
+        aux = aux->siguiente;
+    }
+}
+
 
 #endif // LISTA_H
