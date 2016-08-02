@@ -1,6 +1,8 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#include <time.h>
+
 typedef struct Particiones{
     char part_status;
     char part_type;
@@ -23,7 +25,6 @@ typedef struct ExtendenBootRecord{
     int part_start;
     int part_size;
     int part_next;
-    //int part_previous;
     char part_name[16];
 }EBR;
 
