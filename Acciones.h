@@ -459,8 +459,93 @@ void ReporteDisk(char* dir,char* pathDisco){
 void Particionar(int size, char unit, char fit, char* name, char* path, char type){
 
 
-    printf("\nPartition created succesfully.\n");
-    return;
+    FILE* disk;
+    disk = fopen(path,"rb+");
+    if(disk == NULL){
+        printf("\nERROR: UNKNOWN ERROR WHILE TRYING TO READ DISK.\n");
+        return;
+    }
+
+    int i = 0;
+    int lengthname = strlen(name);
+    if(lengthname > 16){
+
+        printf("\nERROR: Name can't have more than 16 characters.\n");
+        return;
+
+    }
+
+    int SizeInBytes=0;
+    if((unit=='B')||(unit=='b')){
+        SizeInBytes = size;
+    }else if((unit == 'K') || (unit == 'k')){
+        SizeInBytes = size*1024;
+    }else if((unit=='M')||(unit=='m')){
+        SizeInBytes = size*1048576;
+    }
+
+    MBR mbr_DiscoAParticionar;
+    fseek(disk,0,SEEK_SET);
+    fread(&mbr_DiscoAParticionar,sizeof(MBR),1,disk);
+
+    int particionestotalsize = 0;
+    for(i = 0; i < 4; i++){
+        if(mbr_DiscoAParticionar.mbr_particion[i].part_status == '1'){
+            particionestotalsize = particionestotalsize + mbr_DiscoAParticionar.mbr_particion[i].part_size;
+        }
+    }
+
+    int freespace = 0;
+    freespace = mbr_DiscoAParticionar.mbr_tamanio  - particionestotalsize;
+    if(SizeInBytes > freespace){
+        fclose(disk);
+        printf("\nERROR: There is not enough space to create the requested partition.\n");
+        return;
+    }
+
+
+    int ParticionesPrimarias = 0;
+    int flag_ExistsExtendida = 0;
+    int inicioExtendida = 0;
+    int finalExtendida = 0;
+
+    for(i = 0; i < 4; i++){
+        if((mbr_DiscoAParticionar.mbr_particion[i].part_type == 'P' || mbr_DiscoAParticionar.mbr_particion[i].part_type == 'p')){
+            ParticionesPrimarias++;
+        }else if((mbr_DiscoAParticionar.mbr_particion[i].part_type == 'E' || mbr_DiscoAParticionar.mbr_particion[i].part_type == 'e')){
+            flag_ExistsExtendida = 1;
+            inicioExtendida = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+            finalExtendida = mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size;
+        }
+    }
+
+
+
+
+    if(ParticionesPrimarias == 4){
+        fclose(disk);
+        printf("\nERROR: Can't create any more partitions, there are already 4 primary partitions.\n");
+        return;
+    }else if(ParticionesPrimarias == 3 && flag_ExistsExtendida == 1){
+        fclose(disk);
+        printf("\nERROR: Can't create any more partitions.\n");
+        return;
+    }else if((type == 'E') || (type == 'e') && flag_ExistsExtendida == 1){
+        fclose(disk);
+        printf("\nERROR: Can't create extended partition, there is already 1 extended partition.\n");
+        return;
+    }else if((type == 'L') || (type == 'l') && flag_ExistsExtendida == 0){
+        fclose(disk);
+        printf("\nERROR: Can't create logical partition because there is no extended partition.\n");
+        return;
+    }
+
+
+    if(verifyPartitionName(path,name) == 1){
+        printf("\nERROR: There is already a partition with this name.\n");
+        return;
+    }
+
 
 }
 
