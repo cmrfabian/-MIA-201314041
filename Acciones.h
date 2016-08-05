@@ -372,55 +372,72 @@ void ReporteDisk(char* dir,char* pathDisco){
         fread(&ebr,sizeof(EBR),1,disco);
         int indebr = 1;
 
-        while((ebr.part_next != -1)){
-            sprintf(label,"%s%s",label,"\t\t\t<TD>EBR</TD>\n");
-            if(ebr.part_status == '0'){
-                sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
-            }else{
-                sprintf(label,"%s%s",label,"\t\t\t<TD><TABLE BORDER=\"0\" >\n");
-                sprintf(label,"%s%s",label,"\t\t\t<TR><TD>Logica</TD></TR>\n");
-                sprintf(label,"%s%s%s%c%s",label,"\t\t\t<TR><TD align=\"left\">","part_status:",ebr.part_status,"</TD></TR>\n");
-                sprintf(label,"%s%s%s%c%s",label,"\t\t\t<TR><TD align=\"left\">","part_fit:",ebr.part_fit,"</TD></TR>\n");
-                sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_start:",ebr.part_start,"</TD></TR>\n");
-                sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_size:",ebr.part_size,"</TD></TR>\n");
+        while((ebr.part_status != '0')){
+
+            if(ebr.part_next != -1){
+
+                sprintf(label,"%s%s",label,"\t\t\t<TD>EBR</TD>\n");
+                if(ebr.part_status == '0'){
+                    sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
+                }else{
+                    sprintf(label,"%s%s",label,"\t\t\t<TD><TABLE BORDER=\"0\" >\n");
+                    sprintf(label,"%s%s",label,"\t\t\t<TR><TD>Logica</TD></TR>\n");
+                    sprintf(label,"%s%s%s%c%s",label,"\t\t\t<TR><TD align=\"left\">","part_status:",ebr.part_status,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%c%s",label,"\t\t\t<TR><TD align=\"left\">","part_fit:",ebr.part_fit,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_start:",ebr.part_start,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_size:",ebr.part_size,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_next:",ebr.part_next,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%s%s",label,"\t\t\t<TR><TD align=\"left\">","part_name:",ebr.part_name,"</TD></TR>\n");
+                    sprintf(label,"%s%s",label,"\t\t\t</TABLE></TD>\n");
+                }
+
+
+                if(ebr.part_status == '1' ){
+                        espacioEntreLogicas =  (ebr.part_next) - (ebr.part_start + ebr.part_size);
+                    if(espacioEntreLogicas > 0){
+                        sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
+                    }
+                }
+
 
                 fseek(disco,ebr.part_next,SEEK_SET);
-                fread(&tempebr,sizeof(EBR),1,disco);
-                if(tempebr.part_status == 0){
-                    sprintf(label,"%s%s",label,"\t\t\t<TR><TD align=\"left\">part_next:-1 </TD></TR>\n");
-
-                }else{
-                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_next:",ebr.part_next,"</TD></TR>\n");
-
-                }
-
-                sprintf(label,"%s%s%s%s%s",label,"\t\t\t<TR><TD align=\"left\">","part_name:",ebr.part_name,"</TD></TR>\n");
-                sprintf(label,"%s%s",label,"\t\t\t</TABLE></TD>\n");
-            }
+                fread(&auxebr,sizeof(EBR),1,disco);
+                ebr.part_next = auxebr.part_next;
+                ebr.part_fit = auxebr.part_fit;
+                strcpy(ebr.part_name,auxebr.part_name);
+                ebr.part_next = auxebr.part_next;
+                ebr.part_size = auxebr.part_size;
+                ebr.part_start = auxebr.part_start;
+                ebr.part_status = auxebr.part_status;
+                indebr++;
 
 
+            }else if(ebr.part_next == -1){
 
-            fseek(disco,ebr.part_next,SEEK_SET);
-            fread(&auxebr,sizeof(EBR),1,disco);
-
-            if(ebr.part_status == '1' ){
-
-                    espacioEntreLogicas =  (ebr.part_next) - (ebr.part_start + ebr.part_size - sizeof(EBR));
-
-                if(  espacioEntreLogicas > 0 ){
+                sprintf(label,"%s%s",label,"\t\t\t<TD>EBR</TD>\n");
+                if(ebr.part_status == '0'){
                     sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
-
+                }else{
+                    sprintf(label,"%s%s",label,"\t\t\t<TD><TABLE BORDER=\"0\" >\n");
+                    sprintf(label,"%s%s",label,"\t\t\t<TR><TD>Logica</TD></TR>\n");
+                    sprintf(label,"%s%s%s%c%s",label,"\t\t\t<TR><TD align=\"left\">","part_status:",ebr.part_status,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%c%s",label,"\t\t\t<TR><TD align=\"left\">","part_fit:",ebr.part_fit,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_start:",ebr.part_start,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_size:",ebr.part_size,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%d%s",label,"\t\t\t<TR><TD align=\"left\">","part_next:",ebr.part_next,"</TD></TR>\n");
+                    sprintf(label,"%s%s%s%s%s",label,"\t\t\t<TR><TD align=\"left\">","part_name:",ebr.part_name,"</TD></TR>\n");
+                    sprintf(label,"%s%s",label,"\t\t\t</TABLE></TD>\n");
                 }
+
+                if(ebr.part_status == '1' ){
+                        espacioEntreLogicas =  (temporal.mbr_particion[posicionextendida].part_start + temporal.mbr_particion[posicionextendida].part_size) - (ebr.part_start + ebr.part_size);
+                    if(espacioEntreLogicas > 0){
+                        sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
+                    }
+                }
+
+                break;
             }
-
-            ebr.part_fit = auxebr.part_fit;
-            strcpy(ebr.part_name,auxebr.part_name);
-            ebr.part_next = auxebr.part_next;
-
-            ebr.part_size = auxebr.part_size;
-            ebr.part_start = auxebr.part_start;
-            ebr.part_status = auxebr.part_status;
-            indebr++;
 
         }
 
@@ -446,7 +463,6 @@ void ReporteDisk(char* dir,char* pathDisco){
     strcat(shot, " &");
     system(shot);
 }
-
 
 
 
@@ -546,7 +562,510 @@ void Particionar(int size, char unit, char fit, char* name, char* path, char typ
         return;
     }
 
+     if((type == 'E')||(type == 'e')){
 
+        EBR initebr;
+        for(i = 0; i < 4; i++){
+
+            if(i == 0 && mbr_DiscoAParticionar.mbr_particion[i].part_status == '0'){
+
+                strcpy(mbr_DiscoAParticionar.mbr_particion[0].part_name,name);
+                mbr_DiscoAParticionar.mbr_particion[0].part_status = '1';
+                mbr_DiscoAParticionar.mbr_particion[0].part_type = type;
+                mbr_DiscoAParticionar.mbr_particion[0].part_fit = fit;
+                mbr_DiscoAParticionar.mbr_particion[0].part_start = sizeof(MBR);
+                mbr_DiscoAParticionar.mbr_particion[0].part_size = SizeInBytes;
+
+                memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                strcpy(initebr.part_name,"");
+                initebr.part_status = '0';
+                initebr.part_fit = '\0';
+                initebr.part_next = -1;
+                initebr.part_size = 0;
+                initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+
+                fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                fwrite(&initebr,sizeof(EBR),1,disk);
+                break;
+
+            }else if(i == 0 && mbr_DiscoAParticionar.mbr_particion[i].part_status == '1'){
+
+                espacioentreparticiones = mbr_DiscoAParticionar.mbr_particion[i].part_start - sizeof(MBR);
+
+                if (SizeInBytes <= espacioentreparticiones){
+
+                    if(mbr_DiscoAParticionar.mbr_particion[3].part_status == '0' && mbr_DiscoAParticionar.mbr_particion[2].part_status == '1'){
+
+                        int index = 0;
+                        for(index = 3; index > 0; index--){
+
+                            strcpy(mbr_DiscoAParticionar.mbr_particion[index].part_name,mbr_DiscoAParticionar.mbr_particion[index-1].part_name);
+                            mbr_DiscoAParticionar.mbr_particion[index].part_status = '1';
+                            mbr_DiscoAParticionar.mbr_particion[index].part_type = mbr_DiscoAParticionar.mbr_particion[index-1].part_type;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_fit = mbr_DiscoAParticionar.mbr_particion[index-1].part_fit;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_size = mbr_DiscoAParticionar.mbr_particion[index-1].part_size;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_start = mbr_DiscoAParticionar.mbr_particion[index-1].part_start;
+
+                        }
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[0].part_name,name);
+                        mbr_DiscoAParticionar.mbr_particion[0].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[0].part_type = type;
+                        mbr_DiscoAParticionar.mbr_particion[0].part_fit = fit;
+                        mbr_DiscoAParticionar.mbr_particion[0].part_start = sizeof(MBR);
+                        mbr_DiscoAParticionar.mbr_particion[0].part_size = SizeInBytes;
+
+
+                        memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                        strcpy(initebr.part_name,"");
+                        initebr.part_status = '0';
+                        initebr.part_fit = '\0';
+                        initebr.part_next = -1;
+                        initebr.part_size = 0;
+                        initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+
+
+                        fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                        fwrite(&initebr,sizeof(EBR),1,disk);
+                        break;
+
+
+                    }else if(mbr_DiscoAParticionar.mbr_particion[2].part_status == '0' && mbr_DiscoAParticionar.mbr_particion[1].part_status == '1'){
+
+                        int index = 0;
+                        for(index = 2; index > 0; index--){
+
+                            strcpy(mbr_DiscoAParticionar.mbr_particion[index].part_name,mbr_DiscoAParticionar.mbr_particion[index-1].part_name);
+                            mbr_DiscoAParticionar.mbr_particion[index].part_status = '1';
+                            mbr_DiscoAParticionar.mbr_particion[index].part_type = mbr_DiscoAParticionar.mbr_particion[index-1].part_type;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_fit = mbr_DiscoAParticionar.mbr_particion[index-1].part_fit;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_size = mbr_DiscoAParticionar.mbr_particion[index-1].part_size;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_start = mbr_DiscoAParticionar.mbr_particion[index-1].part_start;
+
+                        }
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[0].part_name,name);
+                        mbr_DiscoAParticionar.mbr_particion[0].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[0].part_type = type;
+                        mbr_DiscoAParticionar.mbr_particion[0].part_fit = fit;
+                        mbr_DiscoAParticionar.mbr_particion[0].part_start = sizeof(MBR);
+                        mbr_DiscoAParticionar.mbr_particion[0].part_size = SizeInBytes;
+
+
+                        memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                        strcpy(initebr.part_name,"");
+                        initebr.part_status = '0';
+                        initebr.part_fit = '\0';
+                        initebr.part_next = -1;
+                        initebr.part_size = 0;
+                        initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+
+
+                        fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                        fwrite(&initebr,sizeof(EBR),1,disk);
+
+                        break;
+
+
+                    }else if(mbr_DiscoAParticionar.mbr_particion[1].part_status == '0' && mbr_DiscoAParticionar.mbr_particion[0].part_status == '1'){
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[1].part_name,mbr_DiscoAParticionar.mbr_particion[0].part_name);
+                        mbr_DiscoAParticionar.mbr_particion[1].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[1].part_type = mbr_DiscoAParticionar.mbr_particion[0].part_type;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_fit = mbr_DiscoAParticionar.mbr_particion[0].part_fit;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_size = mbr_DiscoAParticionar.mbr_particion[0].part_size;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_start = mbr_DiscoAParticionar.mbr_particion[0].part_start;
+
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[0].part_name,name);
+                        mbr_DiscoAParticionar.mbr_particion[0].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[0].part_type = type;
+                        mbr_DiscoAParticionar.mbr_particion[0].part_fit = fit;
+                        mbr_DiscoAParticionar.mbr_particion[0].part_start = sizeof(MBR);
+                        mbr_DiscoAParticionar.mbr_particion[0].part_size = SizeInBytes;
+
+
+                        memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                        strcpy(initebr.part_name,"");
+                        initebr.part_status = '0';
+                        initebr.part_fit = '\0';
+                        initebr.part_next = -1;
+                        initebr.part_size = 0;
+                        initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+
+
+                        fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                        fwrite(&initebr,sizeof(EBR),1,disk);
+
+                        break;
+
+                    }
+
+                }else{
+
+                    sizelibrealfinal = mbr_DiscoAParticionar.mbr_tamanio - mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size;
+                    if(SizeInBytes <= sizelibrealfinal) {
+
+                        if(mbr_DiscoAParticionar.mbr_particion[i + 1].part_status == '0'){
+
+                            strcpy(mbr_DiscoAParticionar.mbr_particion[i + 1].part_name,name);
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_status = '1';
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_type = type;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_fit = fit;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size ;//+ 1;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_size = SizeInBytes;
+
+
+                            memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                            strcpy(initebr.part_name,"");
+                            initebr.part_status = '0';
+                            initebr.part_fit = '\0';
+                            initebr.part_next = -1;
+                            initebr.part_size = 0;
+                            initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i + 1].part_start;
+
+
+                            fseek(disk,mbr_DiscoAParticionar.mbr_particion[i + 1].part_start,SEEK_SET);
+                            fwrite(&initebr,sizeof(EBR),1,disk);
+                            break;
+                        }
+
+                    }else{
+                        printf("Ya no hay espacio al final.");
+                    }
+
+                }
+
+
+            }else if(i == 1 && mbr_DiscoAParticionar.mbr_particion[i].part_status == '1'){
+                espacioentreparticiones = mbr_DiscoAParticionar.mbr_particion[i].part_start - (mbr_DiscoAParticionar.mbr_particion[i - 1].part_start+mbr_DiscoAParticionar.mbr_particion[i - 1].part_size);
+
+                if (SizeInBytes <= espacioentreparticiones){
+
+                    if(mbr_DiscoAParticionar.mbr_particion[3].part_status == '0' && mbr_DiscoAParticionar.mbr_particion[2].part_status == '1'){
+
+
+                        int index = 0;
+                        for(index = 3; index > 1; index--){
+
+                            strcpy(mbr_DiscoAParticionar.mbr_particion[index].part_name,mbr_DiscoAParticionar.mbr_particion[index-1].part_name);
+                            mbr_DiscoAParticionar.mbr_particion[index].part_status = '1';
+                            mbr_DiscoAParticionar.mbr_particion[index].part_type = mbr_DiscoAParticionar.mbr_particion[index-1].part_type;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_fit = mbr_DiscoAParticionar.mbr_particion[index-1].part_fit;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_size = mbr_DiscoAParticionar.mbr_particion[index-1].part_size;
+                            mbr_DiscoAParticionar.mbr_particion[index].part_start = mbr_DiscoAParticionar.mbr_particion[index-1].part_start;
+
+                        }
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[1].part_name,name);
+                        mbr_DiscoAParticionar.mbr_particion[1].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[1].part_type = type;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_fit = fit;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_start = mbr_DiscoAParticionar.mbr_particion[i - 1].part_start + mbr_DiscoAParticionar.mbr_particion[i - 1].part_size ;//+ 1;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_size = SizeInBytes;
+
+
+                        memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                        strcpy(initebr.part_name,"");
+                        initebr.part_status = '0';
+                        initebr.part_fit = '\0';
+                        initebr.part_next = -1;
+                        initebr.part_size = 0;
+                        initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+
+
+                        fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                        fwrite(&initebr,sizeof(EBR),1,disk);
+
+                        break;
+
+
+                    }else if(mbr_DiscoAParticionar.mbr_particion[2].part_status == '0' && mbr_DiscoAParticionar.mbr_particion[1].part_status == '1'){
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[2].part_name,mbr_DiscoAParticionar.mbr_particion[1].part_name);
+                        mbr_DiscoAParticionar.mbr_particion[2].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[2].part_type = mbr_DiscoAParticionar.mbr_particion[1].part_type;
+                        mbr_DiscoAParticionar.mbr_particion[2].part_fit = mbr_DiscoAParticionar.mbr_particion[1].part_fit;
+                        mbr_DiscoAParticionar.mbr_particion[2].part_size = mbr_DiscoAParticionar.mbr_particion[1].part_size;
+                        mbr_DiscoAParticionar.mbr_particion[2].part_start = mbr_DiscoAParticionar.mbr_particion[1].part_start;
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[1].part_name,name);
+                        mbr_DiscoAParticionar.mbr_particion[1].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[1].part_type = type;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_fit = fit;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_start = mbr_DiscoAParticionar.mbr_particion[i - 1].part_start + mbr_DiscoAParticionar.mbr_particion[i - 1].part_size ;//+ 1;
+                        mbr_DiscoAParticionar.mbr_particion[1].part_size = SizeInBytes;
+
+
+                        memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                        strcpy(initebr.part_name,"");
+                        initebr.part_fit = '\0';
+                        initebr.part_status = '0';
+                        initebr.part_next = -1;
+                        initebr.part_size = 0;
+                        initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start;
+
+
+                        fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                        fwrite(&initebr,sizeof(EBR),1,disk);
+
+                        break;
+
+                    }
+
+                }else{
+
+                    sizelibrealfinal = mbr_DiscoAParticionar.mbr_tamanio - mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size;
+                    if(SizeInBytes <= sizelibrealfinal) {
+
+                        if(mbr_DiscoAParticionar.mbr_particion[i + 1].part_status == '0'){
+
+                            strcpy(mbr_DiscoAParticionar.mbr_particion[i + 1].part_name,name);
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_status = '1';
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_type = type;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_fit = fit;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size ;//+ 1;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_size = SizeInBytes;
+
+
+                            memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                            strcpy(initebr.part_name,"");
+                            initebr.part_status = '0';
+                            initebr.part_fit = '\0';
+                            initebr.part_next = -1;
+                            initebr.part_size = 0;
+                            initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i + 1].part_start;
+
+
+                            fseek(disk,mbr_DiscoAParticionar.mbr_particion[i + 1].part_start,SEEK_SET);
+                            fwrite(&initebr,sizeof(EBR),1,disk);
+
+                            break;
+                        }
+
+                    }else{
+                        printf("Ya no hay espacio al final.");
+                    }
+                }
+
+            }else if(i == 2 && mbr_DiscoAParticionar.mbr_particion[i].part_status == '1'){
+                espacioentreparticiones = mbr_DiscoAParticionar.mbr_particion[i].part_start - (mbr_DiscoAParticionar.mbr_particion[i - 1].part_start+mbr_DiscoAParticionar.mbr_particion[i - 1].part_size);
+
+                if (SizeInBytes <= espacioentreparticiones){
+
+                    if(mbr_DiscoAParticionar.mbr_particion[3].part_status == '0' && mbr_DiscoAParticionar.mbr_particion[2].part_status == '1'){
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[3].part_name,mbr_DiscoAParticionar.mbr_particion[2].part_name);
+                        mbr_DiscoAParticionar.mbr_particion[3].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[3].part_type = mbr_DiscoAParticionar.mbr_particion[2].part_type;
+                        mbr_DiscoAParticionar.mbr_particion[3].part_fit = mbr_DiscoAParticionar.mbr_particion[2].part_fit;
+                        mbr_DiscoAParticionar.mbr_particion[3].part_size = mbr_DiscoAParticionar.mbr_particion[2].part_size;
+                        mbr_DiscoAParticionar.mbr_particion[3].part_start = mbr_DiscoAParticionar.mbr_particion[2].part_start;
+
+
+                        strcpy(mbr_DiscoAParticionar.mbr_particion[2].part_name,name);
+                        mbr_DiscoAParticionar.mbr_particion[2].part_status = '1';
+                        mbr_DiscoAParticionar.mbr_particion[2].part_type = type;
+                        mbr_DiscoAParticionar.mbr_particion[2].part_fit = fit;
+                        mbr_DiscoAParticionar.mbr_particion[2].part_start = mbr_DiscoAParticionar.mbr_particion[i - 1].part_start + mbr_DiscoAParticionar.mbr_particion[i - 1].part_size  ;//+ 1;
+                        mbr_DiscoAParticionar.mbr_particion[2].part_size = SizeInBytes;
+
+
+                        memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                        strcpy(initebr.part_name,"");
+                        initebr.part_status = '0';
+                        initebr.part_fit = '\0';
+                        initebr.part_next = -1;
+                        initebr.part_size = 0;
+                        initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start ;
+
+
+                        fseek(disk,mbr_DiscoAParticionar.mbr_particion[i].part_start,SEEK_SET);
+                        fwrite(&initebr,sizeof(EBR),1,disk);
+
+                        break;
+                    }
+
+                }else{
+
+                    sizelibrealfinal = mbr_DiscoAParticionar.mbr_tamanio - mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size;
+                    if(SizeInBytes <= sizelibrealfinal) {
+
+
+                        if(mbr_DiscoAParticionar.mbr_particion[i + 1].part_status == '0'){
+
+                            strcpy(mbr_DiscoAParticionar.mbr_particion[i + 1].part_name,name);
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_status = '1';
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_type = type;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_fit = fit;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_start = mbr_DiscoAParticionar.mbr_particion[i].part_start + mbr_DiscoAParticionar.mbr_particion[i].part_size ;//+ 1;
+                            mbr_DiscoAParticionar.mbr_particion[i + 1].part_size = SizeInBytes;
+
+                            memset(initebr.part_nam,0,sizeof(initebr.part_nam));
+                            strcpy(initebr.part_name,"");
+                            initebr.part_status = '0';
+                            initebr.part_fit = '\0';
+                            initebr.part_next = -1;
+                            initebr.part_size = 0;
+                            initebr.part_start = mbr_DiscoAParticionar.mbr_particion[i + 1].part_start;
+
+
+                            fseek(disk,mbr_DiscoAParticionar.mbr_particion[i + 1].part_start,SEEK_SET);
+                            fwrite(&initebr,sizeof(EBR),1,disk);
+
+                            break;
+                        }
+
+                    }else{
+                        printf("Ya no hay espacio al final.");
+                    }
+                }
+            }
+        }
+
+    }else if((type=='L')||(type=='l')){
+
+        int espacioentrelogicas = 0;
+        int posNextEmptyEBR = 0;
+        int posFinalEBR = 0;
+        int posActualEBR = 0;
+
+
+        EBR tempEBR,auxEBR,aux2EBR;
+        fseek(disk,inicioExtendida,SEEK_SET);
+        fread(&tempEBR,sizeof(EBR),1,disk);
+        if(tempEBR.part_status == '0' && tempEBR.part_next == -1){
+
+            strcpy(tempEBR.part_name,name);
+            tempEBR.part_status = '1';
+            tempEBR.part_fit = fit;
+            tempEBR.part_start = inicioExtendida;
+            tempEBR.part_size = SizeInBytes;
+            tempEBR.part_next = -1;
+
+            fseek(disk,inicioExtendida,SEEK_SET);
+            fwrite(&tempEBR,sizeof(EBR),1,disk);
+
+            posNextEmptyEBR =  tempEBR.part_start + tempEBR.part_size;
+
+            if((posNextEmptyEBR > (finalExtendida - sizeof(EBR))) && (posNextEmptyEBR <= finalExtendida)){
+                printf("...");
+                //No escribir ultimo EBR vacio, se saldria de la extendida.
+            }else{
+
+
+                strcpy(auxEBR.part_name,"");
+                auxEBR.part_status= '0';
+                auxEBR.part_fit = '\0';
+                auxEBR.part_start = tempEBR.part_start + tempEBR.part_size;
+                auxEBR.part_size = 0;
+                auxEBR.part_next = -1;
+
+                posNextEmptyEBR =  tempEBR.part_start + tempEBR.part_size;
+
+                fseek(disk,posNextEmptyEBR,SEEK_SET);
+                fwrite(&auxEBR,sizeof(EBR),1,disk);
+            }
+
+        }else if(tempEBR.part_status == '0' && tempEBR.part_next != -1){ /*Caso en que la primera logica fue eliminada. */
+
+            espacioentrelogicas = tempEBR.part_next - inicioExtendida;
+
+            if(SizeInBytes <= espacioentrelogicas ){
+
+                strcpy(tempEBR.part_name,name);
+                tempEBR.part_status = '1';
+                tempEBR.part_fit = fit;
+                tempEBR.part_start = inicioExtendida;
+                tempEBR.part_size = SizeInBytes;
+                //tempEBR.part_next = -1;
+
+                fseek(disk,inicioExtendida,SEEK_SET);
+                fwrite(&tempEBR,sizeof(EBR),1,disk);
+            }
+
+        }else if((tempEBR.part_status != '0')){
+
+            while((tempEBR.part_status != '0')){
+
+                if(tempEBR.part_next != -1){
+
+                    espacioentrelogicas = tempEBR.part_next - (tempEBR.part_start + tempEBR.part_size);
+                    posActualEBR = tempEBR.part_start;
+                    posFinalEBR = tempEBR.part_start + tempEBR.part_size;
+
+                    if(SizeInBytes <= espacioentrelogicas ){
+
+                        strcpy(auxEBR.part_name,name);
+                        auxEBR.part_status = '1';
+                        auxEBR.part_fit = fit;
+                        auxEBR.part_start = tempEBR.part_start + tempEBR.part_size;
+                        auxEBR.part_size = SizeInBytes;
+                        auxEBR.part_next = tempEBR.part_next;
+
+                        fseek(disk,posFinalEBR,SEEK_SET);
+                        fwrite(&auxEBR,sizeof(EBR),1,disk);
+
+                        tempEBR.part_next = auxEBR.part_start;
+                        fseek(disk,posActualEBR,SEEK_SET);
+                        fwrite(&tempEBR,sizeof(EBR),1,disk);
+                        break;
+
+                    }
+
+                    fseek(disk,tempEBR.part_next,SEEK_SET);
+                    fread(&aux2EBR,sizeof(EBR),1,disk);
+                    tempEBR.part_next = aux2EBR.part_next;
+                    tempEBR.part_fit = aux2EBR.part_fit;
+                    strcpy(tempEBR.part_name,aux2EBR.part_name);
+                    tempEBR.part_next = aux2EBR.part_next;
+                    tempEBR.part_size = aux2EBR.part_size;
+                    tempEBR.part_start = aux2EBR.part_start;
+                    tempEBR.part_status = aux2EBR.part_status;
+
+
+                }else if(tempEBR.part_next == -1){
+
+                    espacioentrelogicas = finalExtendida - (tempEBR.part_start + tempEBR.part_size); //Espacio entre final de Extendida y ultima logica.
+                    posActualEBR = tempEBR.part_start;
+                    posFinalEBR = tempEBR.part_start + tempEBR.part_size;
+
+                    if(SizeInBytes <= espacioentrelogicas ){
+
+                        strcpy(auxEBR.part_name,name);
+                        auxEBR.part_status = '1';
+                        auxEBR.part_fit = fit;
+                        auxEBR.part_start = tempEBR.part_start + tempEBR.part_size;
+                        auxEBR.part_size = SizeInBytes;
+                        auxEBR.part_next = -1;
+
+                        fseek(disk,posFinalEBR,SEEK_SET);
+                        fwrite(&auxEBR,sizeof(EBR),1,disk);
+
+                        tempEBR.part_next = tempEBR.part_next;
+                        tempEBR.part_fit = tempEBR.part_fit;
+                        strcpy(tempEBR.part_name,tempEBR.part_name);
+                        tempEBR.part_next = auxEBR.part_start;
+                        tempEBR.part_size = tempEBR.part_size;
+                        tempEBR.part_start = tempEBR.part_start;
+                        tempEBR.part_status = tempEBR.part_status;
+                        fseek(disk,posActualEBR,SEEK_SET);
+                        fwrite(&tempEBR,sizeof(EBR),1,disk);
+                        break;
+
+
+                    }else{
+
+                        fclose(disk);
+                        printf("\nERROR: There is not enough space to create the requested partition.\n");
+                        return;
+
+                    }
+                    break;
+                }
+            }
+        }
+    }
 }
 
 
