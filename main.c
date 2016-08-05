@@ -8,7 +8,7 @@
 //METODOS
 void Automata_analizador(char *comando);
 void restartVariables();
-void Ejecutar();
+void Ejecutar(char *entrada);
 void Reportes(char *name, char *path, char *id, char *ruta);
 void crearid(char *path, char *name);
 int File_Exists(const char *ruta);
@@ -66,7 +66,10 @@ int banderaprimerofdisk = 0;    //Me indica que función viene primero en el com
 
 int main()
 {
-    Ejecutar();
+    int e = 1;
+    while(e == 1){
+        Ejecutar(entrada);
+    }
     return 0;
 }
 
@@ -398,7 +401,7 @@ void crearid(char *path, char *name){
     FILE* disk;
     disk = fopen(path,"rb+");
     if(disk == NULL){
-        printf("\nERROR: No existe disco %s",path);
+        printf("\nERROR: Disk %s does not exist",path);
         return;
     }
 
@@ -545,17 +548,28 @@ void crearid(char *path, char *name){
 
 
 //Método para la ejecución del programa.
-void Ejecutar(){
+void Ejecutar(char* entrada){
 
-    restartVariables();
-    ejecucion = 1;
+       ejecucion = 1;
     while (ejecucion != 0) {
+
+        restartVariables();
+
+        estado = 0;
 
         memset(&LTokens,0,sizeof(LTokens));
         banderaerrorparametro = 0;
-        printf("christian@201314041:~$");
-        gets(entrada);
+        //printf("christian@201314041:~$");
+        //gets(entrada);
+        //Automata_analizador(entrada);
+
+
+        if(strcasecmp(entrada, "") == 0){
+            printf("christian@201314041:~$");
+            gets(entrada);
+        }
         Automata_analizador(entrada);
+
 
         int todobien = 1;
         while (todobien == 1){
@@ -1200,6 +1214,7 @@ void Ejecutar(){
                             }
 
                            // ACCION DE DELETE AQUI
+                            DeleteParticion(name,path,del);
                         }
                         restartVariables();
                         aux = NULL;
@@ -1412,23 +1427,20 @@ void Ejecutar(){
 
                                 }else{
 
-                                    char comando[600] = {0};
-
-                                    /* Creacion de directorio y archivo para reportes. */
+                                    char comando[600];
+                                    strcpy (comando, "");
                                     strcat(comando, "mkdir -p ");
-                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));// Cambio .png por .dot para escribir el .dot.
+                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));
+                                    printf("%s\n", comando);
                                     system(comando);
-
                                     memset(comando,0,sizeof(comando));
                                     strcat(comando, "rmdir ");
-                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));// Cambio .png por .dot para escribir el .dot.
+                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));
                                     system(comando);
-
                                     memset(comando,0,sizeof(comando));
                                     strcat(comando, "touch ");
-                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));// Cambio .png por .dot para escribir el .dot.
+                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));
                                     system(comando);
-
                                     banderapath = 1;
 
                                 }
@@ -1528,6 +1540,86 @@ void Ejecutar(){
 
                     break;
 
+                case 7:// EXEC
+
+                    while(aux != NULL){
+
+                        if(strncasecmp(aux->tipo,"respath",strlen("respath")) == 0){
+
+                            if(strncasecmp(aux->siguiente->tipo,"ruta",strlen("ruta")) == 0){
+
+                                memset(path,0,sizeof(path));
+                                strcpy(path, aux->siguiente->valor);
+
+                                if(File_Exists(path)==1){
+
+                                    //CODIGO QUE SIRVE PARA LEER EL ARCHIVO LINEA POR LINEA
+                                    char linea[500];
+
+                                    FILE *archEntrada=fopen(path,"r");
+
+                                    if(archEntrada){
+
+                                        while(fgets(linea,500,archEntrada) != NULL){
+
+
+                                            char auxiliar[2];
+                                            auxiliar[1] = '\0';
+                                            char lineaAux[500];
+                                            strcpy(lineaAux,"");
+                                            int i = 0;
+                                            for(i = 0; i < strlen(linea);i ++){
+
+                                                auxiliar[0] = linea[i];
+
+                                                if(auxiliar[0] == '\n' || auxiliar[0] == '\r'){
+
+                                                    if(i == 0){
+                                                        strcpy(lineaAux,"\n");
+                                                        break;
+                                                    }
+
+                                                }else{
+
+                                                    strcat(lineaAux,auxiliar);
+                                                }
+
+                                            }
+                                            if(strcasecmp(lineaAux,"") != 0){
+                                                printf("%s\n",lineaAux);
+                                            }
+
+                                          //  printf("-$%s\n",lineaAux);
+                                            Ejecutar(lineaAux);
+                                        }
+
+                                        fclose(archEntrada);
+
+                                    }else{
+                                        printf("\nERROR: Unexpected error.\n");
+                                    }
+
+                                }else{
+                                    printf("\nERROR: This script does not exist, please verify path.\n");
+                                }
+
+                                restartVariables();
+                                aux = NULL;
+                                todobien = 0;
+                                break;
+
+                            }else{
+
+                                printf("ERROR: Not a valid path '%s'\n", aux->siguiente->valor);
+                                restartVariables();
+                                aux = NULL;
+                                todobien = 0;
+                                break;
+                            }
+                        }
+                        aux = aux->siguiente;
+                    }
+                    break;
 
                 default:
                     break;
@@ -1539,12 +1631,8 @@ void Ejecutar(){
             LTokens.primero = NULL;
             LTokens.ultimo = NULL;
             todobien = 0;
+            return;
 
         }
     }
 }
-
-
-
-
-
