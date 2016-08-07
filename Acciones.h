@@ -18,6 +18,7 @@ int verifyPartitionName(char *path, char* name);
 void ReporteMBR(char* dir , char* pathDisco);
 void ReporteDisk(char *dir, char *pathDisco);
 void DeleteParticion(char *name, char *path, char *del);
+void AddPartition(char *name, char *path, int add, char unit);
 
 char *pathReplace(char* originalpath){
 
@@ -67,6 +68,7 @@ char *replace_str(char *str, char *orig, char *rep)
 
   return buffer;
 }
+
 void ReporteMBR(char* dir , char* pathDisco){
 
     printf("Reporte MBR\n");
@@ -81,8 +83,6 @@ void ReporteMBR(char* dir , char* pathDisco){
     memset(label,0,sizeof(label));
     memset(graphviz,0,sizeof(graphviz));
 
-    //char* ruta = "";
-
     MBR tempMBR;
     EBR ebr,auxebr;
     struct tm *loctime;
@@ -94,8 +94,6 @@ void ReporteMBR(char* dir , char* pathDisco){
         fseek(leer,0,SEEK_SET);
         fread(&tempMBR,sizeof(MBR),1,leer);
         loctime = localtime (&tempMBR.mbr_fecha_creacion);
-        printf("\tFecha de Creación MBR: %s \n", asctime (loctime));
-
 
         strcpy(rep,replace_str(dir,".png",".dot"));
 
@@ -128,34 +126,44 @@ void ReporteMBR(char* dir , char* pathDisco){
                 fread(&ebr,sizeof(EBR),1,leer);
                 int indebr = 1;
 
-                while((ebr.part_next != -1)){
+                while((ebr.part_status != '0')){
 
-                    if(ebr.part_status == '1'){
+                    if(ebr.part_next != -1){
+
                         sprintf(label,"%s\n <TR>\n\t <TD colspan=\"2\"><b>EBR_%d</b></TD></TR>",label,indebr);
                         sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%c</TD> \n</TR>",label,"  \tpart_status: ",ebr.part_status);
                         sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%c</TD> \n</TR>",label,"  \tpart_fit: ",ebr.part_fit);
                         sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_start: ",ebr.part_start);
                         sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_size: ",ebr.part_size);
                         sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_next: ",ebr.part_next);
-                        //sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_previous: ",ebr.part_previous);
                         sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%s</TD> \n</TR>",label,"  \tpart_name: ",ebr.part_name);
 
+                        fseek(leer,ebr.part_next,SEEK_SET);
+                        fread(&auxebr,sizeof(EBR),1,leer);
+                        ebr.part_next = auxebr.part_next;
+                        ebr.part_fit = auxebr.part_fit;
+                        strcpy(ebr.part_name,auxebr.part_name);
+                        ebr.part_next = auxebr.part_next;
+                        ebr.part_size = auxebr.part_size;
+                        ebr.part_start = auxebr.part_start;
+                        ebr.part_status = auxebr.part_status;
+                        indebr++;
+
+                    }else if(ebr.part_next == -1){
+
+                        sprintf(label,"%s\n <TR>\n\t <TD colspan=\"2\"><b>EBR_%d</b></TD></TR>",label,indebr);
+                        sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%c</TD> \n</TR>",label,"  \tpart_status: ",ebr.part_status);
+                        sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%c</TD> \n</TR>",label,"  \tpart_fit: ",ebr.part_fit);
+                        sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_start: ",ebr.part_start);
+                        sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_size: ",ebr.part_size);
+                        sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%d</TD> \n</TR>",label,"  \tpart_next: ",ebr.part_next);
+                        sprintf(label,"%s\n <TR>\n\t <TD align=\"right\"><i>%s</i></TD>\n\t <TD align=\"left\">\t%s</TD> \n</TR>",label,"  \tpart_name: ",ebr.part_name);
+
+                        break;
                     }
-
-                    fseek(leer,ebr.part_next,SEEK_SET);
-                    fread(&auxebr,sizeof(EBR),1,leer);
-                    ebr.part_fit = auxebr.part_fit;
-                    strcpy(ebr.part_name,auxebr.part_name);
-                    ebr.part_next = auxebr.part_next;
-                    //ebr.part_previous = auxebr.part_previous;
-                    ebr.part_size = auxebr.part_size;
-                    ebr.part_start = auxebr.part_start;
-                    ebr.part_status = auxebr.part_status;
-                    indebr++;
-
                 }
             }
-         }
+        }
 
         sprintf(graphviz,"%s%s",graphviz,label);
         sprintf(graphviz,"%s%s",graphviz,"</TABLE> \n >, ]; \n }");
@@ -187,7 +195,6 @@ void ReporteDisk(char* dir,char* pathDisco){
     char graphviz[20000];
     int posicionextendida = 0;
     int existeextendida = 0;
-
 
     memset(label,0,sizeof(label));
     memset(graphviz,0,sizeof(graphviz));
@@ -249,9 +256,6 @@ void ReporteDisk(char* dir,char* pathDisco){
                 sprintf(label,"%s%s",label,"\t\t\t</TABLE></TD>\n");
             }
 
-        }else if(i == 1 && temporal.mbr_particion[i].part_status == '0'){
-            sprintf(label,"%s%s",label,"\t\t\t<TD ROWSPAN=\"2\">Libre</TD>\n");
-            break;
         }else if(i == 1 && temporal.mbr_particion[i].part_status == '1'){
 
             espacioentreparticiones = temporal.mbr_particion[i].part_start - (temporal.mbr_particion[i-1].part_start+temporal.mbr_particion[i-1].part_size);
@@ -283,9 +287,8 @@ void ReporteDisk(char* dir,char* pathDisco){
                 sprintf(label,"%s%s%s%s%s",label,"\t\t\t<TR><TD align=\"left\">","part_name:",temporal.mbr_particion[i].part_name,"</TD></TR>\n");
                 sprintf(label,"%s%s",label,"\t\t\t</TABLE></TD>\n");
             }
-        }else if(i == 2 && temporal.mbr_particion[i].part_status == '0'){
-            sprintf(label,"%s%s",label,"\t\t\t<TD ROWSPAN=\"2\">Libre</TD>\n");
-            break;
+
+
         }else if(i == 2 && temporal.mbr_particion[i].part_status == '1'){
 
             espacioentreparticiones = temporal.mbr_particion[i].part_start - (temporal.mbr_particion[i-1].part_start+temporal.mbr_particion[i-1].part_size);
@@ -317,12 +320,11 @@ void ReporteDisk(char* dir,char* pathDisco){
                 sprintf(label,"%s%s%s%s%s",label,"\t\t\t<TR><TD align=\"left\">","part_name:",temporal.mbr_particion[i].part_name,"</TD></TR>\n");
                 sprintf(label,"%s%s",label,"\t\t\t</TABLE></TD>\n");
             }
-        }else if(i == 3 && temporal.mbr_particion[i].part_status == '0'){
-            sprintf(label,"%s%s",label,"\t\t\t<TD ROWSPAN=\"2\">Libre</TD>\n");
-            break;
+
+
         }else if(i == 3 && temporal.mbr_particion[i].part_status == '1'){
 
-            espacioentreparticiones = temporal.mbr_particion[i].part_start - (temporal.mbr_particion[i].part_start+temporal.mbr_particion[i].part_size);
+            espacioentreparticiones = temporal.mbr_particion[i].part_start - (temporal.mbr_particion[i-1].part_start+temporal.mbr_particion[i-1].part_size);
 
             if (espacioentreparticiones > 0){
                 sprintf(label,"%s%s",label,"\t\t\t<TD ROWSPAN=\"2\">Libre</TD>\n");
@@ -356,14 +358,16 @@ void ReporteDisk(char* dir,char* pathDisco){
 
             }
 
-            espacioentreparticiones = temporal.mbr_tamanio - (temporal.mbr_particion[i].part_start+temporal.mbr_particion[i].part_size);
 
-            if (espacioentreparticiones > 0){
-                sprintf(label,"%s%s",label,"\t\t\t<TD ROWSPAN=\"2\">Libre</TD>\n");
-            }
         }
 
     }
+    espacioentreparticiones = temporal.mbr_tamanio - (temporal.mbr_particion[i].part_start+temporal.mbr_particion[i].part_size);
+
+    if (espacioentreparticiones > 0){
+        sprintf(label,"%s%s",label,"\t\t\t<TD ROWSPAN=\"2\">Libre</TD>\n");
+    }
+
     sprintf(label,"%s%s",label,"\t\t\t</TR>\n");
 
     if(existeextendida == 1 ){
@@ -418,7 +422,6 @@ void ReporteDisk(char* dir,char* pathDisco){
                 ebr.part_status = auxebr.part_status;
                 indebr++;
 
-
             }else if(ebr.part_next == -1){
 
                 sprintf(label,"%s%s",label,"\t\t\t<TD>EBR</TD>\n");
@@ -442,18 +445,11 @@ void ReporteDisk(char* dir,char* pathDisco){
                         sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
                     }
                 }
-
-
-
-
                 break;
             }
-
-        }
-
+       }
         sprintf(label,"%s%s",label,"\t\t\t</TR>\n");
         existeextendida = 0;
-
     }
 
     sprintf(graphviz,"%s%s",graphviz,label);
@@ -476,12 +472,234 @@ void ReporteDisk(char* dir,char* pathDisco){
 }
 
 
-
 /* Fin REPORTES */
 
 
 
 /* ACCIONES DE LOS COMANDOS */
+
+
+void AddPartition(char* name, char* path, int add, char unit){
+
+    int sizeAfterPartition = 0;
+    int sizeAfterLogicPartition = 0;
+
+    int existeextendida = 0;
+    int posicionextendida = 0;
+
+    int esLogica = 0;
+    int posicionlogica = 0;
+
+    int sizeParticion = 0; //Tamaño de la partición a modificar.
+    int sizeParticionLogica = 0;
+
+    FILE* disco;
+    disco = fopen(path,"rb+");
+    if(disco== NULL){
+        printf("\nERROR: UNKNOWN ERROR WHILE TRYING TO READ DISK.\n");
+        return;
+    }
+
+    if(verifyPartitionName(path,name) == 0){
+        fclose(disco);
+        printf("\nERROR: Partition %s does not exist\n", name);
+        return;
+    }
+
+    MBR modificar;
+    fseek(disco,0,SEEK_SET);
+    fread(&modificar,sizeof(MBR),1,disco);
+
+    int indiceauxiliar = 0;
+    int a = 0;
+    for(a = 0; a < 4; a++){
+        if(modificar.mbr_particion[a].part_type == 'E'){
+            existeextendida = 1;
+            posicionextendida = modificar.mbr_particion[a].part_start;
+
+        }
+        if(strcasecmp(modificar.mbr_particion[a].part_name,name) == 0){
+            indiceauxiliar = a;
+            sizeParticion = modificar.mbr_particion[a].part_size;
+            break;
+        }
+
+    }
+
+
+    EBR tempEBR,auxEBR;
+    int lastLogica = 0; /* Posicion final de la ultima logica para verificacion de add negativo en EXTENDIDA */
+
+    if(existeextendida == 1){
+
+        fseek(disco,posicionextendida,SEEK_SET);
+        fread(&tempEBR,sizeof(EBR),1,disco);
+
+        while((tempEBR.part_status != '0')){
+
+            if(tempEBR.part_next != -1){
+
+                if(strcasecmp(tempEBR.part_name,name) == 0){
+                    esLogica = 1;
+                    sizeParticionLogica = tempEBR.part_size;
+                    posicionlogica = tempEBR.part_start;
+
+                    break;
+                }
+
+                fseek(disco,tempEBR.part_next,SEEK_SET);
+                fread(&auxEBR,sizeof(EBR),1,disco);
+                tempEBR.part_next = auxEBR.part_next;
+                tempEBR.part_fit = auxEBR.part_fit;
+                strcpy(tempEBR.part_name,auxEBR.part_name);
+                tempEBR.part_next = auxEBR.part_next;
+                tempEBR.part_size = auxEBR.part_size;
+                tempEBR.part_start = auxEBR.part_start;
+                tempEBR.part_status = auxEBR.part_status;
+
+
+            }else if(tempEBR.part_next == -1){
+                lastLogica == tempEBR.part_start + tempEBR.part_size;
+
+                if(strcasecmp(tempEBR.part_name,name) == 0){
+                    esLogica = 1;
+                    sizeParticionLogica = tempEBR.part_size;
+                    posicionlogica = tempEBR.part_start;
+
+                    break;
+                }
+
+                break;
+            }
+
+        }
+
+    }
+
+
+    if((unit=='B')||(unit=='b')){
+        add = add;
+    }else if((unit == 'K') || (unit == 'k')){
+        add = add*1024;
+    }else if((unit=='M')||(unit=='m')){
+        add = add*1024*1024;
+    }
+    //<>
+    /* Se quitará espacio de la partición */
+    if(add < 0){
+        add = add * -1;
+        if(esLogica == 0){
+            if(add > sizeParticion - 2097152){
+                fclose(disco);
+                printf("\nERROR: The partition has to have al least 2 Mb.\n");
+                printf("\nERROR: You can only remove %d bytes or less from this partition.\n", sizeParticion - 2097152);
+                return;
+            }else{
+                if(modificar.mbr_particion[indiceauxiliar].part_type == 'E' || modificar.mbr_particion[indiceauxiliar].part_type == 'e'){
+                    int finalExt = modificar.mbr_particion[indiceauxiliar].part_start + modificar.mbr_particion[indiceauxiliar].part_size;
+                    if(add <= (finalExt - lastLogica)){
+                        modificar.mbr_particion[indiceauxiliar].part_size = modificar.mbr_particion[indiceauxiliar].part_size - add;
+                    }else{
+                        printf("\nERROR: Can't remove space because of an existing logical partition.\n");
+
+                    }
+                }else{
+
+
+                    modificar.mbr_particion[indiceauxiliar].part_size = modificar.mbr_particion[indiceauxiliar].part_size - add;
+
+                }
+
+            }
+        }else if(esLogica == 1){
+            if(add > sizeParticionLogica - 2097152){
+                fclose(disco);
+                printf("\nERROR: The partition has to have al least 2 Mb.\n");
+                printf("\nERROR: You can only remove %d bytes or less from this partition.\n", sizeParticion - 2097152);
+                return;
+            }else{
+
+                fseek(disco,posicionlogica,SEEK_SET);
+                fread(&tempEBR,sizeof(EBR),1,disco);
+
+                tempEBR.part_size = tempEBR.part_size - add;
+
+                fseek(disco,posicionlogica,SEEK_SET);
+                fwrite(&tempEBR,sizeof(EBR),1,disco);
+
+            }
+        }
+
+
+    /* Se agregaŕa espacio a la partición */
+    }else if(add > 0){
+        if(esLogica == 0){
+
+            if(indiceauxiliar == 3){
+                sizeAfterPartition = modificar.mbr_tamanio - (modificar.mbr_particion[indiceauxiliar].part_start + modificar.mbr_particion[indiceauxiliar].part_size);
+                if(sizeAfterPartition >= add){
+                    modificar.mbr_particion[indiceauxiliar].part_size = modificar.mbr_particion[indiceauxiliar].part_size + add ;
+                }else{
+                    fclose(disco);
+                    printf("\nERROR: The size you want to add es bigger than the free space available.\n");
+                    return;
+                }
+            }else{
+                if(modificar.mbr_particion[indiceauxiliar+1].part_status == '1'){
+                    sizeAfterPartition = modificar.mbr_particion[indiceauxiliar+1].part_start - (modificar.mbr_particion[indiceauxiliar].part_start + modificar.mbr_particion[indiceauxiliar].part_size);
+                    if(sizeAfterPartition >= add){
+                        modificar.mbr_particion[indiceauxiliar].part_size = modificar.mbr_particion[indiceauxiliar].part_size + add ;
+                    }else{
+                        fclose(disco);
+                        printf("\nERROR: The size you want to add es bigger than the free space available.\n");
+                        return;
+                    }
+                }else{
+                    sizeAfterPartition = modificar.mbr_tamanio - (modificar.mbr_particion[indiceauxiliar].part_start + modificar.mbr_particion[indiceauxiliar].part_size);
+                    if(sizeAfterPartition >= add){
+                        modificar.mbr_particion[indiceauxiliar].part_size = modificar.mbr_particion[indiceauxiliar].part_size + add ;
+                    }else{
+                        fclose(disco);
+                        printf("\nERROR: The size you want to add es bigger than the free space available.\n");
+                        return;
+                    }
+                }
+            }
+        }else if(esLogica == 1){
+
+            fseek(disco,posicionlogica,SEEK_SET);
+            fread(&tempEBR,sizeof(EBR),1,disco);
+
+            fseek(disco,tempEBR.part_next,SEEK_SET);
+            fread(&auxEBR,sizeof(EBR),1,disco);
+
+
+            sizeAfterLogicPartition = tempEBR.part_next - (tempEBR.part_start + tempEBR.part_size);
+            if(sizeAfterLogicPartition >= add){
+                tempEBR.part_size = tempEBR.part_size + add ;
+            }else{
+                fclose(disco);
+                printf("\nERROR: The size you want to add es bigger than the free space available.\n");
+                return;
+            }
+
+            fseek(disco,posicionlogica,SEEK_SET);
+            fwrite(&tempEBR,sizeof(EBR),1,disco);
+
+        }
+    }
+
+    fseek(disco,0, SEEK_SET);
+    fwrite(&modificar,sizeof(MBR),1,disco);
+    fclose(disco);
+
+    printf("\nModification complete.\n");
+    return;
+}
+
+
+
+
 
 void DeleteParticion(char* name, char* path, char* del){
 
@@ -494,7 +712,7 @@ void DeleteParticion(char* name, char* path, char* del){
 
     if(verifyPartitionName(path,name) == 0){
         fclose(disco);
-        printf("\nERROR: Partition %s does not exist", name);
+        printf("\nERROR: Partition %s does not exist.\n", name);
         return;
     }
 
@@ -583,7 +801,7 @@ void DeleteParticion(char* name, char* path, char* del){
 
 
     if(existePartition == 1){
-        printf("Desea eliminar partición %s? [y/n]",name);
+        printf("\nDesea eliminar partición %s? [y/n]",name);
         if(fgetc(stdin)=='y'){
             if(strncasecmp(del, "fast", strlen("fast")) == 0){
                 if(esLogica == 1){
@@ -772,14 +990,14 @@ void DeleteParticion(char* name, char* path, char* del){
             fwrite(&ordenar,sizeof(MBR),1,disco);
             fclose(disco);
 
-            printf("\nPartition %s deleted succesfully.", name);
+            printf("\nPartition %s deleted succesfully.\n", name);
             return;
         }else if(fgetc(stdin)=='n'){
-            printf("\nDelete cancelled.");
+            printf("\nDelete cancelled.\n");
             return;
 
         }else{
-            printf("\nERROR");
+            printf("\nERROR\n");
             return ;
         }
     }
@@ -813,6 +1031,11 @@ void Particionar(int size, char unit, char fit, char* name, char* path, char typ
         SizeInBytes = size*1048576;
     }
 
+    if((SizeInBytes) < 2097152){
+        printf("\nERROR: Minimum size for a partition is 2 Mb.\n");
+        return;
+    }
+
     MBR mbr_DiscoAParticionar;
     fseek(disk,0,SEEK_SET);
     fread(&mbr_DiscoAParticionar,sizeof(MBR),1,disk);
@@ -826,10 +1049,13 @@ void Particionar(int size, char unit, char fit, char* name, char* path, char typ
 
     int freespace = 0;
     freespace = mbr_DiscoAParticionar.mbr_tamanio  - particionestotalsize;
-    if(SizeInBytes > freespace){
-        fclose(disk);
-        printf("\nERROR: There is not enough space to create the requested partition.\n");
-        return;
+     if(type != 'L' ){
+        if(SizeInBytes > freespace){
+            fclose(disk);
+            printf("\nERROR: There is not enough space to create the requested partition.\n");
+            return;
+        }
+
     }
 
 
@@ -1640,11 +1866,19 @@ void crearDisco(int size, char* path, char* name, char unit){
         disksize = size*1024 + sizeof(MBR);
     }
 
+
+    /* Verificacion de tamaño minimo de disco */
+    if((disksize - sizeof(MBR)) < 10485760){
+        printf("\nERROR: Minimum size for a disk is 10 Mb.\n");
+        return;
+
+    }
+
     /* Creación de directorio. */
     strcpy(comando, "");
     strcat(comando, "mkdir -p ");
     strcat(comando, pathReplace(path));
-    printf("%s\n", comando);
+    printf("\n%s\n", comando);
     system(comando);
 
     /* Creación de archivo binario. */
@@ -1655,18 +1889,13 @@ void crearDisco(int size, char* path, char* name, char unit){
     snprintf(bsdev, sizeof(bsdev) ,"%d",disksize);
     strcat(comando,bsdev);
     strcat(comando, " count=1");
-    printf("%s\n",comando);
+    printf("\n%s\n",comando);
     system(comando);
 
 
     MBR initmbr;
     /* Tamaño MBR*/
-    if(unit == 'm' || unit == 'M'){
-        initmbr.mbr_tamanio = size*1048576 + sizeof(MBR);
-    }
-    else if(unit == 'k' || unit == 'K'){
-        initmbr.mbr_tamanio = size*1024 + sizeof(MBR);
-    }
+    initmbr.mbr_tamanio = disksize;
 
     /* Fecha creacion MBR */
     initmbr.mbr_fecha_creacion = time (NULL);
@@ -1688,14 +1917,14 @@ void crearDisco(int size, char* path, char* name, char unit){
     FILE *disk;
     disk = fopen(ruta,"rb+");
     if(disk == NULL){
-        printf("%s", "UNKNOWN ERROR WHILE CREATING DISK.");
+        printf("\n%s\n", "UNKNOWN ERROR WHILE CREATING DISK.");
         return;
     }
     fseek(disk,0,SEEK_SET);
     fwrite(&initmbr,sizeof(MBR),1,disk);
     fclose(disk);
     //system("clear");
-    printf("Disk '%s' created.\n", name);
+    printf("\nDisk '%s' created.\n", name);
 
 }
 
@@ -1748,16 +1977,6 @@ int verifyPartitionName(char *path, char *name){
     }
     return 0; /* No hay partición con este nombre. */
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

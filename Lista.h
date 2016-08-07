@@ -150,5 +150,45 @@ void desmontardisco(listamontados *lista, char id[])
     }
 }
 
+void borrarToken (listatokens *lista, char *tipo)
+{
+    token* aux;
+    aux = lista->primero;
+    while (aux != NULL)
+    {
+        if(strcasecmp(aux->tipo,tipo)==0)
+        {
+
+            if(aux == lista->primero && aux != lista->ultimo)
+            {
+                lista->primero = aux->siguiente;
+                lista->primero->anterior = NULL;
+                free(aux);
+            }
+            else if(aux== lista->ultimo &&  aux != lista->primero)
+            {
+                lista->ultimo = aux->anterior;
+                lista->ultimo->siguiente = NULL;
+                free(aux);
+            }
+            else if (aux == lista->primero && aux == lista->ultimo)
+            {
+                lista->primero = NULL;
+                lista->ultimo = NULL;
+                free(aux);
+            }
+            else
+            {
+                aux->anterior->siguiente = aux->siguiente;
+                aux->siguiente->anterior = aux->anterior;
+                free(aux);
+            }
+        break;
+        }
+        aux = aux->siguiente;
+    }
+}
+
+
 
 #endif // LISTA_H

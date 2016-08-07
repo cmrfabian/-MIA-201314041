@@ -61,7 +61,7 @@ int banderacreacion = 0;
 int banderaname = 0;
 int banderaid= 0;
 int banderaprimerofdisk = 0;    //Me indica que función viene primero en el comando fdisk (size, delete, add)
-
+int banderaExec = 0;
 
 
 int main()
@@ -72,6 +72,7 @@ int main()
     }
     return 0;
 }
+
 
 //Método para analizar comando en consola.
 void Automata_analizador(char *comando){
@@ -118,7 +119,7 @@ void Automata_analizador(char *comando){
                 memset(lectura,0,sizeof(lectura));
                 state = 0;
             }else{
-                printf("\nERROR: Unknown symbol '%s'.",lectura);
+                printf("\nERROR: Unknown symbol '%s'.\n",lectura);
                 memset(lectura,0,sizeof(lectura));
                 state = 0;
             }
@@ -249,27 +250,25 @@ void Automata_analizador(char *comando){
 
         case 7:
 
-            //if(actual == '\n'){
+            if(banderaExec == 0){
             //    printf("DOBLE LINEA");
                 gets(comando);
                 Automata_analizador(comando);
-            //}
+            }
             break;
 
 
         case 8:
 
-            if((actual == ' ') || isalpha(actual) || isdigit(actual)){
-                state = 8;
-                strncat(lectura,&actual,1);
-            }else if((actual == '/') || (actual == '.')){
-                state = 8;
-                strncat(lectura,&actual,1);
-            }else if(actual == '\0' || actual == '\n'){
+             if(actual == '\0' || actual == '\n'){
                 insertarToken(&LTokens,"comentario",lectura);
                 memset(lectura,0,sizeof(lectura));
                 state = 0;
+            }else{
+                state = 8;
+                strncat(lectura,&actual,1);
             }
+
             break;
 
         case 9:
@@ -401,7 +400,7 @@ void crearid(char *path, char *name){
     FILE* disk;
     disk = fopen(path,"rb+");
     if(disk == NULL){
-        printf("\nERROR: Disk %s does not exist",path);
+        printf("\nERROR: Disk %s does not exist.\n",path);
         return;
     }
 
@@ -454,7 +453,7 @@ void crearid(char *path, char *name){
     int verify = verifyPartitionName(path,name);
     if(verify == 0){
         fclose(disk);
-        printf("\nERROR: No existe partición %s",name);
+        printf("\nERROR: Partion %s does not exist.\n",name);
         return;
     }
 
@@ -473,7 +472,7 @@ void crearid(char *path, char *name){
             if(strcasecmp(aux->path,path)==0){
                 i_part = aux->numeromount;
                 if(strcasecmp(aux->name,name)==0){
-                    printf("\nPartición %s ya se encuentra montada.",name);
+                    printf("\nPartition %s is already mounted.\n",name);
                     return;
                 }
                 i_part = i_part + 1;
@@ -493,7 +492,7 @@ void crearid(char *path, char *name){
             id[3] = i_part;
 
             montarDisco(&Montados,name,id,path,i_disco,i_part);
-            printf("\nPartición %s montada exitosamente.",name);
+            printf("\nPartition %s mounted.\n",name);
             return;
 
         }else if (nuevodisco == 0){
@@ -507,7 +506,7 @@ void crearid(char *path, char *name){
                     i_part = aux->numeromount;
 
                     if(strcasecmp(aux->name,name)==0){
-                        printf("\nPartición %s ya se encuentra montada.",name);
+                         printf("\nPartition %s is already mounted.\n",name);
                         return;
                     }
                     i_part = i_part + 1;
@@ -519,7 +518,7 @@ void crearid(char *path, char *name){
             id[2] = i_disco;
             id[3] = i_part;
             montarDisco(&Montados,name,id,path,i_disco,i_part);
-            printf("\nPartición %s montada exitosamente.",name);
+            printf("\nPartition %s mounted.\n",name);
             return;
         }
     }else{
@@ -529,15 +528,15 @@ void crearid(char *path, char *name){
         id[3] = i_part;
 
         montarDisco(&Montados,name,id,path,i_disco,i_part);
-        printf("\nPartición %s montada exitosamente.",name);
+        printf("\nPartition %s mounted.\n",name);
         return;
     }
 
     disco *auxprint = Montados.primero;
     while(auxprint!=NULL){
         printf("\tId: %s \n",auxprint->id);
-        printf("\t\tDisk: %s \n",auxprint->path);
-        printf("\t\tName: %s \n",auxprint->name);
+        printf("\t   Disk: %s \n",auxprint->path);
+        printf("\t   Name: %s \n",auxprint->name);
 
         auxprint = auxprint->siguiente;
     }
@@ -545,30 +544,34 @@ void crearid(char *path, char *name){
 }
 
 
-
-
 //Método para la ejecución del programa.
 void Ejecutar(char* entrada){
 
-       ejecucion = 1;
+    ejecucion = 1;
     while (ejecucion != 0) {
 
-        restartVariables();
-
         estado = 0;
+        if(banderaExec != 1){
+            memset(&LTokens,0,sizeof(LTokens));
+        }
 
-        memset(&LTokens,0,sizeof(LTokens));
         banderaerrorparametro = 0;
-        //printf("christian@201314041:~$");
-        //gets(entrada);
-        //Automata_analizador(entrada);
-
 
         if(strcasecmp(entrada, "") == 0){
             printf("christian@201314041:~$");
             gets(entrada);
         }
         Automata_analizador(entrada);
+
+        token *tempLista = LTokens.primero;
+            while (tempLista != NULL){
+            if(strncasecmp(tempLista->tipo, "doblelinea", strlen("doblelinea")) == 0){
+                borrarToken(&LTokens,"doblelinea");
+                return;
+                break;
+            }
+            tempLista = tempLista->siguiente;
+        }
 
 
         int todobien = 1;
@@ -589,8 +592,8 @@ void Ejecutar(char* entrada){
 
                         }else{
 
-                            printf("\nERROR: Missing 'mkdisk' parameters.");
-                            printf("\n'mkdisk' mandatory parameters: -size -path -name\n");
+                            printf("\nERROR: Missing 'mkdisk' parameters.\n");
+                            printf("'mkdisk' mandatory parameters: -size -path -name\n");
                             restartVariables();
                             aux = NULL;
                             todobien = 0;
@@ -599,13 +602,13 @@ void Ejecutar(char* entrada){
 
                     }else if(strncasecmp(aux->tipo, "resrmdisk", strlen("resrmdisk")) == 0){
 
-                        if(aux->siguiente !=NULL){
+                        if(aux->siguiente != NULL){
                             aux = aux->siguiente;
                             estado = 2;
 
                         }else{
                             printf("\nERROR: Missing 'rmdisk' parameters.\n");
-                            printf("\n'rmdisk' mandatory parameters: -path\n");
+                            printf("'rmdisk' mandatory parameters: -path\n");
                             restartVariables();
                             aux = NULL;
                             todobien = 0;
@@ -616,7 +619,7 @@ void Ejecutar(char* entrada){
 
                         if(aux->siguiente !=NULL){
                             strcpy(unit,"k");
-                            aux =aux->siguiente;
+                            aux = aux->siguiente;
                             estado = 3;
 
                         }else{
@@ -630,7 +633,7 @@ void Ejecutar(char* entrada){
                     }else if(strncasecmp(aux->tipo, "resmount", strlen("resmount")) == 0){
 
                         if(aux->siguiente !=NULL){
-                            aux =aux->siguiente;
+                            aux = aux->siguiente;
                             estado = 4;
 
                         }else{
@@ -653,13 +656,13 @@ void Ejecutar(char* entrada){
                     }else if(strncasecmp(aux->tipo, "resumount", strlen("resumount")) == 0){
 
                         if(aux->siguiente !=NULL){
-                            aux =aux->siguiente;
+                            aux = aux->siguiente;
                             estado = 5;
 
                         }else{
 
                             printf("\nERROR: Missing 'umount' parameters.\n");
-                            printf("\n'umount' mandatory parameters: -id\n");
+                            printf("'umount' mandatory parameters: -id\n");
                             restartVariables();
                             aux = NULL;
                             todobien = 0;
@@ -669,13 +672,13 @@ void Ejecutar(char* entrada){
                     }else if(strncasecmp(aux->tipo, "resrep", strlen("resrep")) == 0){
 
                         if(aux->siguiente !=NULL){
-                            aux =aux->siguiente;
+                            aux = aux->siguiente;
                             estado = 6;
 
                         }else{
 
                             printf("\nERROR: Missing 'rep' parameters.\n");
-                            printf("\n'rep' mandatory parameters: -path -name -id\n");
+                            printf("'rep' mandatory parameters: -path -name -id\n");
                             restartVariables();
                             aux = NULL;
                             todobien = 0;
@@ -684,18 +687,22 @@ void Ejecutar(char* entrada){
 
                     }else if(strncasecmp(aux->tipo, "resexec", strlen("resexec")) == 0){
                         if(aux->siguiente != NULL){
-                            aux =aux->siguiente;
+                            aux = aux->siguiente;
                             estado = 7;
 
                         }else{
 
                             printf("\nERROR: Missing 'exec' parameters.\n");
-                            printf("\n'exec' mandatory parameters: -path\n");
+                            printf("'exec' mandatory parameters: -path\n");
                             restartVariables();
                             aux = NULL;
                             todobien = 0;
                             break;
                         }
+                    }else if(strncasecmp(aux->tipo, "comentario", strlen("comentario")) == 0){
+                        restartVariables();
+                        todobien = 0;
+                        aux = NULL;
                     }else{
                         printf("\nERROR: Command not found.\n");
                         restartVariables();
@@ -784,7 +791,6 @@ void Ejecutar(char* entrada){
                                 strcpy(name,aux->siguiente->valor);
 
                                 int longitudName = strlen(name);
-                                printf("%c",name[1]);
 
                                 if((name[longitudName-4] == '.') && (name[longitudName-3] == 'd' || name[longitudName-3] == 'D') && (name[longitudName-2] == 's' || name[longitudName-2] == 'S') && (name[longitudName-1] == 'k' || name[longitudName-1] == 'K')){
 
@@ -805,7 +811,7 @@ void Ejecutar(char* entrada){
 
                             }else{
 
-                                printf("\nERROR: Unknown error un parameter 'name'.\n");
+                                printf("\nERROR: Unknown error in parameter 'name'.\n");
                                 restartVariables();
                                 aux = NULL;
                                 todobien = 0;
@@ -863,7 +869,7 @@ void Ejecutar(char* entrada){
 
                     }else{
 
-                        printf("Creating disk %s at %s ...\n", name, path);
+                        printf("\nCreating disk %s at %s ...\n", name, path);
                         crearDisco(size,path,name,unit[0]);
                         restartVariables();
                         aux = NULL;
@@ -887,7 +893,7 @@ void Ejecutar(char* entrada){
                                 strcpy(path, aux->siguiente->valor);
 
                                 if(File_Exists(path)==1){
-                                    printf("Are you sure you want to remove this disk? [y/n]");
+                                    printf("\nAre you sure you want to remove this disk? [y/n]");
 
                                     if(fgetc(stdin)=='y'){
                                         remove(path);
@@ -895,7 +901,7 @@ void Ejecutar(char* entrada){
                                     }else if(fgetc(stdin)=='n'){
 
                                     }else{
-                                        printf("\nERROR");
+                                        printf("\nERROR\n");
                                     }
 
                                 }else{
@@ -1178,7 +1184,7 @@ void Ejecutar(char* entrada){
                         if(size != 0){
                             //CREAR PARTICION
 
-                            printf("Creating partition in disk %s ...\n",path);
+                            printf("\nCreating partition in disk %s ...\n",path);
                             Particionar(size, unit[0], fit[0], name, path, type[0]);
                             restartVariables();
                             aux = NULL;
@@ -1191,17 +1197,18 @@ void Ejecutar(char* entrada){
 
 
 
-                            printf("Changing capacity...\n");
+                            printf("\nChanging capacity...\n");
                             printf("Add %d\n",add);
                             if(add < 0 ){
                                 printf("Removing space...\n");
                             }
                                 else if(add > 0){
-                                printf("Adding space...n");
+                                printf("Adding space...\n");
 
                             }
 
                             // ACCION DE ADD AQUI
+                            AddPartition(name,path,add,unit[0]);
 
                         }else if(del != NULL){
 
@@ -1289,8 +1296,8 @@ void Ejecutar(char* entrada){
                         disco *auxprint = Montados.primero;
                         while(auxprint!=NULL){
                             printf("\tId: %s \n",auxprint->id);
-                            printf("\t\tDisk: %s \n",auxprint->path);
-                            printf("\t\tName: %s \n",auxprint->name);
+                            printf("\t   Disk: %s \n",auxprint->path);
+                            printf("\t   Name: %s \n",auxprint->name);
 
                             auxprint = auxprint->siguiente;
                         }
@@ -1340,7 +1347,6 @@ void Ejecutar(char* entrada){
                                     }else{
 
                                         int banderaexiste = 0;
-
                                         disco *temp = Montados.primero;
                                         while (temp != NULL){
 
@@ -1348,20 +1354,7 @@ void Ejecutar(char* entrada){
 
                                                 desmontardisco(&Montados,id);
                                                 printf("\nPartition %s unmount.\n",id);
-
-                                                restartVariables();
-                                                aux = NULL;
-                                                todobien = 0;
                                                 banderaexiste = 1;
-
-                                                disco *auxprint = Montados.primero;
-                                                while(auxprint!=NULL){
-                                                    printf("\tId: %s \n",auxprint->id);
-                                                    printf("\t\tDisk: %s \n",auxprint->path);
-                                                    printf("\t\tName: %s \n",auxprint->name);
-                                                    auxprint = auxprint->siguiente;
-                                                }
-
                                                 break;
                                             }
 
@@ -1427,20 +1420,22 @@ void Ejecutar(char* entrada){
 
                                 }else{
 
-                                    char comando[600];
-                                    strcpy (comando, "");
+                                    char comando[600] = {0};
+                                    /* Creacion de directorio y archivo para reportes. */
                                     strcat(comando, "mkdir -p ");
-                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));
-                                    printf("%s\n", comando);
+                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));// Cambio .png por .dot para escribir el .dot.
                                     system(comando);
+
                                     memset(comando,0,sizeof(comando));
                                     strcat(comando, "rmdir ");
-                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));
+                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));// Cambio .png por .dot para escribir el .dot.
                                     system(comando);
+
                                     memset(comando,0,sizeof(comando));
                                     strcat(comando, "touch ");
-                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));
+                                    strcat(comando, pathReplace(replace_str(path,".png",".dot")));// Cambio .png por .dot para escribir el .dot.
                                     system(comando);
+
                                     banderapath = 1;
 
                                 }
@@ -1557,7 +1552,7 @@ void Ejecutar(char* entrada){
                                     char linea[500];
 
                                     FILE *archEntrada=fopen(path,"r");
-
+                                    memset(&LTokens,0,sizeof(LTokens));
                                     if(archEntrada){
 
                                         while(fgets(linea,500,archEntrada) != NULL){
@@ -1566,7 +1561,7 @@ void Ejecutar(char* entrada){
                                             char auxiliar[2];
                                             auxiliar[1] = '\0';
                                             char lineaAux[500];
-                                            strcpy(lineaAux,"");
+                                            memset(lineaAux,0,sizeof(lineaAux));
                                             int i = 0;
                                             for(i = 0; i < strlen(linea);i ++){
 
@@ -1590,6 +1585,7 @@ void Ejecutar(char* entrada){
                                             }
 
                                           //  printf("-$%s\n",lineaAux);
+                                            banderaExec = 1;
                                             Ejecutar(lineaAux);
                                         }
 
@@ -1610,7 +1606,7 @@ void Ejecutar(char* entrada){
 
                             }else{
 
-                                printf("ERROR: Not a valid path '%s'\n", aux->siguiente->valor);
+                                printf("\nERROR: Not a valid path '%s'\n", aux->siguiente->valor);
                                 restartVariables();
                                 aux = NULL;
                                 todobien = 0;
