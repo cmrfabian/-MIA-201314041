@@ -103,6 +103,7 @@ void ReporteMBR(char* dir , char* pathDisco){
         fprintf(reporte,"node [label=\"N\", shape=plaintext, fontsize=12, fontname=\"Ubuntu\", style=filled ,fillcolor=grey88, height = 0.7]; \n");
         fprintf(reporte,"arset [label=< \n <TABLE ALIGN=\"LEFT\">");
 
+        sprintf(label,"%s\n <TR>\n\t <TD align=\"left\" colspan=\"2\"><b>Disco %s</b></TD></TR>",label,pathDisco);
         sprintf(label,"%s<TR>\n\t<TD align=\"left\">%s</TD> \n\t <TD align=\"left\">%i</TD> \n</TR> ",label," mbr_tamanio: ",tempMBR.mbr_tamanio);
         sprintf(label,"%s<TR>\n\t<TD align=\"left\">%s</TD> \n\t <TD align=\"left\">%s</TD> \n</TR> ",label," mbr_fecha_creacion: ",asctime (loctime));
         sprintf(label,"%s<TR>\n\t<TD align=\"left\">%s</TD> \n\t <TD align=\"left\">%i</TD> \n</TR> ",label," mbr_disk_signature: ",tempMBR.mbr_disk_signature);
@@ -472,8 +473,7 @@ void ReporteDisk(char* dir,char* pathDisco){
     }
 
     sprintf(graphviz,"%s%s",graphviz,label);
-    sprintf(graphviz,"%s%s",graphviz,"</TABLE> \n >]; \n }");
-
+    sprintf(graphviz,"%s%s%s%s",graphviz,"</TABLE> \n >]; label=\"",pathDisco,"\" \n }");
     fprintf(reporte,"%s",graphviz);
     fclose(reporte);
     fclose(disco);
@@ -822,7 +822,9 @@ void DeleteParticion(char* name, char* path, char* del){
 
     if(existePartition == 1){
         printf("\nDesea eliminar partición %s? [y/n]",name);
-        if(fgetc(stdin)=='y'){
+        char pregunta[50];
+        scanf(" %[^\n]", pregunta);
+        if(strcasecmp(pregunta,"y")==0){
             if(strncasecmp(del, "fast", strlen("fast")) == 0){
                 if(esLogica == 1){
 
@@ -1012,7 +1014,7 @@ void DeleteParticion(char* name, char* path, char* del){
 
             printf("\nPartition %s deleted succesfully.\n", name);
             return;
-        }else if(fgetc(stdin)=='n'){
+        }else if(strcasecmp(pregunta,"n")==0){
             printf("\nDelete cancelled.\n");
             return;
 

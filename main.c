@@ -254,6 +254,7 @@ void Automata_analizador(char *comando){
             //    printf("DOBLE LINEA");
                 gets(comando);
                 Automata_analizador(comando);
+                 borrarToken(&LTokens,"doblelinea");
             }
             break;
 
@@ -893,15 +894,16 @@ void Ejecutar(char* entrada){
                                 strcpy(path, aux->siguiente->valor);
 
                                 if(File_Exists(path)==1){
-                                    printf("\nAre you sure you want to remove this disk? [y/n]");
-
-                                    if(fgetc(stdin)=='y'){
+                                    printf("Are you sure you want to remove this disk? [y/n]");
+                                    char pregunta[50];
+                                    scanf(" %[^\n]", pregunta);
+                                    if(strcasecmp(pregunta,"y")==0){
                                         remove(path);
                                         printf("\nDisk %s removed.\n", path);
-                                    }else if(fgetc(stdin)=='n'){
+                                    }else if(strcasecmp(pregunta,"n")==0){
 
                                     }else{
-                                        printf("\nERROR\n");
+                                        printf("\nERROR");
                                     }
 
                                 }else{

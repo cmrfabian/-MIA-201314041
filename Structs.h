@@ -19,7 +19,7 @@ typedef struct MasterBootRecord{
     Particion mbr_particion[4];
 }MBR;
 
-typedef struct ExtendenBootRecord{
+typedef struct ExtendedBootRecord{
     char part_status;
     char part_fit;
     int part_start;
