@@ -127,7 +127,7 @@ void ReporteMBR(char* dir , char* pathDisco){
                 fread(&ebr,sizeof(EBR),1,leer);
                 int indebr = 1;
 
-                while((ebr.part_status != '0')){
+                while((ebr.part_status != '0') || ebr.part_next != -1){
 
                     if(ebr.part_next != -1){
 
@@ -398,12 +398,7 @@ void ReporteDisk(char* dir,char* pathDisco){
 
         int indebr = 1;
 
-        if(ebr.part_status == '0'){
-            sprintf(label,"%s%s",label,"\t\t\t<TD>EBR</TD>\n");
-            sprintf(label,"%s%s",label,"\t\t\t<TD>Libre</TD>\n");
-        }
-
-        while((ebr.part_status != '0')){
+        while((ebr.part_status != '0') || ebr.part_next != -1 ){
 
             if(ebr.part_next != -1){
 
@@ -555,7 +550,7 @@ void AddPartition(char* name, char* path, int add, char unit){
         fseek(disco,posicionextendida,SEEK_SET);
         fread(&tempEBR,sizeof(EBR),1,disco);
 
-        while((tempEBR.part_status != '0')){
+        while((tempEBR.part_status != '0') ||  tempEBR.part_next != -1){
 
             if(tempEBR.part_next != -1){
 
@@ -776,7 +771,7 @@ void DeleteParticion(char* name, char* path, char* del){
         fseek(disco,posicionextendida,SEEK_SET);
         fread(&tempEBR,sizeof(EBR),1,disco);
 
-        while((tempEBR.part_status != '0')){
+        while((tempEBR.part_status != '0') || tempEBR.part_next != -1){
             if(tempEBR.part_next != -1){
                 if(strcasecmp(tempEBR.part_name,name) == 0)
                 {
@@ -1742,22 +1737,45 @@ int verifyPartitionName(char *path, char *name){
             fseek(disk,temporal.mbr_particion[i].part_start,SEEK_SET);
             fread(&ebr,sizeof(EBR),1,disk);
 
-            while((ebr.part_next != -1)){
 
-                if(ebr.part_status == '1'){
-                    if(strcasecmp(name,ebr.part_name) == 0){
-                        fclose(disk);
-                        return 1; /* Una partición ya tiene el mismo nombre. */
+            while((ebr.part_status != '0' || ebr.part_next != -1)){
+
+
+
+                if(ebr.part_next != -1){
+
+                    if(ebr.part_status == '1'){
+                        if(strcasecmp(name,ebr.part_name) == 0){
+                            fclose(disk);
+                            return 1; /* Una partición ya tiene el mismo nombre. */
+                        }
                     }
+
+
+                    fseek(disk,ebr.part_next,SEEK_SET);
+                    fread(&auxebr,sizeof(EBR),1,disk);
+                    ebr.part_next = auxebr.part_next;
+                    ebr.part_fit = auxebr.part_fit;
+                    strcpy(ebr.part_name,auxebr.part_name);
+                    ebr.part_next = auxebr.part_next;
+                    ebr.part_size = auxebr.part_size;
+                    ebr.part_start = auxebr.part_start;
+                    ebr.part_status = auxebr.part_status;
+
+
+                }else if(ebr.part_next == -1){
+
+                    if(ebr.part_status == '1'){
+                        if(strcasecmp(name,ebr.part_name) == 0){
+                            fclose(disk);
+                            return 1; /* Una partición ya tiene el mismo nombre. */
+                        }
+                    }
+
+
+                    break;
                 }
-                fseek(disk,ebr.part_next,SEEK_SET);
-                fread(&auxebr,sizeof(EBR),1,disk);
-                ebr.part_fit = auxebr.part_fit;
-                strcpy(ebr.part_name,auxebr.part_name);
-                ebr.part_next = auxebr.part_next;
-                ebr.part_size = auxebr.part_size;
-                ebr.part_start = auxebr.part_start;
-                ebr.part_status = auxebr.part_status;
+
             }
         }
     }
